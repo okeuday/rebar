@@ -1,66 +1,59 @@
-rebar
-=====
+rebar (CloudI fork)
+===================
 
-rebar is an Erlang build tool that makes it easy to compile and test Erlang
-applications, port drivers and releases.
+rebar is an Erlang build tool that makes it easy to compile and test Erlang/OTP
+applications
 
-[![Build Status](https://secure.travis-ci.org/rebar/rebar.png?branch=master)](http://travis-ci.org/rebar/rebar)
+rebar is now a single human-readable escript (Erlang script),
+so it's easy to distribute or even embed directly in a project.
+rebar uses standard Erlang/OTP conventions for project structures,
+thus minimizing the amount of build configuration work.
+rebar also provides dependency management, enabling application writers to
+easily reuse common libraries from a variety of locations (git, hg, etc).
 
-rebar is a self-contained Erlang script, so it's easy to distribute or even
-embed directly in a project. Where possible, rebar uses standard Erlang/OTP
-conventions for project structures, thus minimizing the amount of build
-configuration work. rebar also provides dependency management, enabling
-application writers to easily re-use common libraries from a variety of
-locations (git, hg, etc).
+History
+-------
 
-Building
---------
+This repository is a fork of the historical rebar2 repository
+(https://github.com/rebar/rebar using the tag `2.1.0-pre`).
+This repository exists to provide a more dependable rebar2 release
+that can work with any Erlang/OTP release while avoiding complexity.
+The reasons rebar2 is still being used instead of
+[rebar3](https://github.com/erlang/rebar3) are:
 
-Information on building and installing [Erlang/OTP](http://www.erlang.org) can
-be found [here](https://github.com/erlang/otp/wiki/Installation) ([more
-info](https://github.com/erlang/otp/blob/master/INSTALL.md)).
+* rebar3 has many dependencies that are not static, so it represents a very large amount of source code with security risks (due to forcing the use of remote dependencies)
+* rebar3 is focused on usage with dependencies as remote packages, not filesystem dependencies
+* rebar3 was not created with autoconf/automake use considered (including the concept of keeping srcdir separate from builddir)
+* rebar3 was never meant to remain compatible with rebar2 use
+
+This fork of rebar2 has removed historical functionality that was known to be
+unused, unreliable or misleading to focus on the compilation and testing of
+Erlang/OTP source code.  The differences with the historical rebar2 are
+listed below:
+
+* `rebar_port_compiler.erl` source code was removed (use a separate build tool for C/C++, OCaml, Rust, etc.)
+* `rebar_escripter.erl` source code was removed (to avoid the creation of opaque binary blobs bound to a small range of Erlang/OTP releases and the related execution failures)
+* `rebar_qc.erl` source code was removed (using PropEr in CT use is simpler)
+* `rebar_xref.erl` source code was removed (dialyzer use catches more problems)
+* `rebar_shell.erl` source code was removed (use a shell separate from rebar execution)
+* `rebar_reltool.erl` source code was removed (use the `release` escript in [reltool_util](https://github.com/okeuday/reltool_util) for this functionality)
+* `rebar_appups.erl` and `rebar_upgrade.erl` source code was removed
+* `rebar_asn1_compiler.erl` source code was removed
+* `rebar_abnfc_compiler.erl` source code was removed
+* `rebar_lfe_compiler.erl` source code was removed (use `lfec` instead)
+* `rebar_neotoma_compiler.erl` source code was removed
+* `rebar_protobuffs_compiler.erl` source code was removed
+* `rebar_templater.erl` and `rebar_erlydtl_compiler.erl` source code was removed
+* `rebar.config` `plugins` module functionality was removed
+* `$HOME/.rebar/config` is not loaded
+* `--long` command-line arguments are not accepted to avoid `--long=value` or `--long value` ambiguity
+* `-f (--force)`, `-D`, `-p (--profile)`, `-k (--keep-going)` command-line arguments were removed
 
 ### Dependencies
 
-To build rebar you will need a working installation of Erlang R13B03 (or later).
-
-Should you want to clone the rebar repository, you will also require git.
-
-#### Downloading
-
-You can download a pre-built binary version of rebar from:
-
-https://github.com/rebar/rebar/wiki/rebar
-
-#### Building rebar
-
-```sh
-$ git clone git://github.com/rebar/rebar.git
-$ cd rebar
-$ ./bootstrap
-Recompile: src/getopt
-...
-Recompile: src/rebar_utils
-==> rebar (compile)
-Congratulations! You now have a self-contained script called "rebar" in
-your current working directory. Place this script anywhere in your path
-and you can use rebar to build OTP-compliant apps.
-```
-
-
-Contributing to rebar
-=====================
-
-Pull requests and branching
----------------------------
-
-Use one topic branch per pull request.
-
-Do not commit to master in your fork.
-
-Provide a clean branch without any merge commits from upstream.
-
-Usually you should squash any intermediate commits into the original single commit.
+You will need a working installation of Erlang/OTP R13B03 (or later).
+Information on building and installing [Erlang/OTP](https://www.erlang.org) can
+be found [here](https://www.erlang.org/doc/installation_guide/install).
 
 Code style
 ----------
@@ -70,11 +63,6 @@ Do not introduce trailing whitespace.
 Do not mix spaces and tabs.
 
 Do not introduce lines longer than 80 characters.
-
-[erlang-mode (emacs)](http://www.erlang.org/doc/man/erlang.el.html) indentation
-is preferred.  vi-only users are encouraged to give [Vim
-emulation](http://emacswiki.org/emacs/Evil) ([more
-info](https://gitorious.org/evil/pages/Home)) a try.
 
 Writing Commit Messages
 -----------------------
@@ -87,63 +75,19 @@ One line summary (less than 50 characters)
 Longer description (wrap at 72 characters)
 </pre>
 
-### Summary
+### Commit Message Example
 
-* Less than 50 characters
+Less Than 50 Characters Subject
 * What was changed
 * Imperative present tense (fix, add, change)
   * `Fix bug 123`
   * `Add 'foobar' command`
   * `Change default timeout to 123`
-* No period
-
-### Description
-
-* Wrap at 72 characters
 * Why, explain intention and implementation approach
-* Present tense
+* No period
 
 ### Atomicity
 
-* Break up logical changes
+* Break up logical changes that are unrelated
 * Make whitespace changes separately
 
-Run checks
-----------
-
-Before you submit a patch, run ``make check`` to execute the test suite and
-check for [xref](http://www.erlang.org/doc/man/xref.html) and
-[Dialyzer](http://www.erlang.org/doc/man/dialyzer.html) warnings. You may have
-to run ``make clean`` first.
-
-[Dialyzer](http://www.erlang.org/doc/man/dialyzer.html) warnings are compared
-against a set of safe-to-ignore warnings found in
-[dialyzer_reference](https://raw.github.com/rebar/rebar/master/dialyzer_reference).
-[xref](http://www.erlang.org/doc/man/xref.html) is run with [custom
-queries](https://raw.github.com/rebar/rebar/master/rebar.config) to suppress
-safe-to-ignore warnings.
-
-Community and Resources
------------------------
-
-In case of problems that cannot be solved through documentation or examples, you
-may want to try to contact members of the community for help. The community is
-also where you want to go for questions about how to extend rebar, fill in bug
-reports, and so on.
-
-The main place to go for questions is the [rebar mailing
-list](http://lists.basho.com/pipermail/rebar_lists.basho.com/). If you need
-quick feedback, you can try the #rebar channel on
-[irc.freenode.net](http://freenode.net). Be sure to check the
-[wiki](https://github.com/rebar/rebar/wiki) first, just to be sure you're not
-asking about things with well known answers.
-
-For bug reports, roadmaps, and issues, visit the [github issues
-page](https://github.com/rebar/rebar/issues).
-
-General rebar community resources and links:
-
-- [Rebar Mailing List](http://lists.basho.com/pipermail/rebar_lists.basho.com/)
-- #rebar on [irc.freenode.net](http://freenode.net/)
-- [wiki](https://github.com/rebar/rebar/wiki)
-- [issues](https://github.com/rebar/rebar/issues)
